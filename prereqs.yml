@@ -1,0 +1,13 @@
+runtime:
+  requires:
+    perl: '5.014000'
+test:
+  requires:
+    Test::Compile: 0
+develop:
+  requires:
+    Dist::Zilla: 0
+    Perl::Critic::Community: '1.000'
+    Perl::Critic::TooMuchCode: '0.13'
+    Perl::Critic::Policy::Lax::ProhibitStringyEval::ExceptForRequire: 0
+    Test::Warnings: 0
