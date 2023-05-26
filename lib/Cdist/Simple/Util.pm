@@ -1,8 +1,8 @@
 package Cdist::Simple::Util;
 
+# ABSTRACT: Utilities for Cdist::Simple
 our $VERSION = '0.001000';
 
-use v5.14;  # Exporter::Almighty requires perl v5.12+.
 use strict;
 use warnings;
 
@@ -10,26 +10,18 @@ use List::Util        qw( pairs uniq );
 use Text::ParseWords  qw( shellwords );
 use Text::Trim        qw( trim );
 
-our %EXPORT_TAGS;
-BEGIN {
-  %EXPORT_TAGS = (
-    io       => [ qw( cat slurp ) ],
-    list     => [ qw( flat ) ],
-    misc     => [ qw( tag_group )  ],
-    text     => [ qw( trim ) ],
-    words    => [ qw( shellwords )],
-  );
-}
-#use Exporter::Shiny ( map { ref $_ ? @$_ : $_} values %EXPORT_TAGS );
+use Exporter::Handy::Util qw(expand_xtags);
 use Exporter::Handy -exporter_setup => 1;
-export (
-  tags ( { sigil => ':'},
-    io    => [ qw( cat slurp ) ],
-    list  => [ qw( flat ) ],
-    text  => [ qw( trim ) ],
-    words => [ qw( shellwords )],
-  ),
+
+our %EXPORT_TAGS = (
+  util  => [ qw(:io :list :text :words) ],
+  io    => [ qw(cat slurp) ],
+  list  => [ qw(flat) ],
+  text  => [ qw(trim) ],
+  words => [ qw(shellwords) ],
 );
+export( expand_xtags(\%EXPORT_TAGS, values %EXPORT_TAGS) );
+
 
 #== General purpose UTILITIES
 
@@ -45,7 +37,7 @@ sub slurp {
 
 # List
 sub _is_plain_arrayref { ref( $_[0] ) eq 'ARRAY' }
-sub flat(@) { # shamelessly copied from: [List::Flat](https://metacpan.org/pod/List::Flat)
+sub flat { # shamelessly copied from: [List::Flat](https://metacpan.org/pod/List::Flat)
   my @results;
 
   while (@_) {
@@ -59,68 +51,34 @@ sub flat(@) { # shamelessly copied from: [List::Flat](https://metacpan.org/pod/L
   return wantarray ? @results : \@results;  ## no critic
 }
 
+# Hash
+sub prefix_keys {
+  # prefix keys (every odd item within pairs) with a given string
+  my $prefix = shift // '';
+  my %hash   = (@_);
 
-# Exporting
-sub tag_group {
-  # useful for building grouped tags for Exporter::Almighty, or just plain %EXPORT_TAGS
-  my $name  = ( @_ && !ref( $_[0] ) ) ? shift : undef;
-  my %items = %{; shift };
-  my %opt   = %{; delete $items{''} // {} };
+  my %res = map {
+    ( "$prefix" . "$_" , $hash{$_} )
+  } keys %hash;
 
-  $name = delete $opt{name} unless defined $name;
-  return unless $name // '';
-
-  my $sep   = $opt{sep} // '_';
-  my @pfx   = @{; $opt{pfx} // [ "${name}${sep}" ] };
-
-  my @tags;
-  for my $pfx (@pfx) {
-    for my $key (sort keys %items) {
-      my $value  = $items{$key};
-      push @tags, ( "${pfx}${key}" => $value );
-    }
-  }
-  # umbrella entry (that encompasses all subtags)
-  push @tags, ( $name => [ map {; $_//'' ? (":$_") : () } ( sort keys %{ +{ @tags } }) ] );
-
-  @tags
+  return wantarray ? %res : \%res;  ## no critic
 }
 
-sub make_tags(@) {
-  resolve_tag_groups(@_);
-}
-sub resolve_tag_groups(@) {
-  my @res;
-  while (@_) {
-    my ($k, $v) = (shift, shift);
-    ref( $v ) eq 'HASH' and do { unshift @_, tag_group( $k, $v ); next };
-    push @res, ( $k, $v );
-  }
-  @res
-}
-
-sub expand_tags(@) {
-  local $_;
-  my $tags =  @_ && ref($_[0]) eq q(HASH) ? shift : {};
-  my %tags = resolve_tag_groups(%$tags);
-  my %seen;
-  my @res;
-
-  while (@_) {
-    $_ = shift;
-    next unless defined;
-    ref($_) eq 'ARRAY' and do { unshift @_, @$_; next };
-
-    next if exists $seen{$_} && ( $seen{$_} // 0 );
-    $seen{$_} = 1;
-
-    m/^([:-](.*))$/ and do {
-      unshift @_, delete $tags{$1} // (), delete $tags{$2} // ();
-      next;
-    };
-    push @res, $_;
-  }
-  @res
-}
 
 1;
+
+__END__
+
+=pod
+
+=encoding UTF-8
+
+=head1 SYNOPSIS
+
+=for comment Brief examples of using the module.
+
+=head1 DESCRIPTION
+
+=for comment The module's description.
+
+=cut

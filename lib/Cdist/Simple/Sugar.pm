@@ -1,30 +1,31 @@
-package Cdist::Simple;
+package Cdist::Simple::Sugar;
 
+# ABSTRACT: Sugar for the Cdist Configuration Manager
 our $VERSION = '0.001000';
 
-use v5.14;  # Exporter::Almighty requires perl v5.12+.
 use strict;
 use warnings;
 
-
 use IO::Handle;
 use namespace::autoclean;
+use Text::Trim        qw( trim );
 
 
+use Cdist::Simple::Util qw(flat);
 use Cdist::Simple::Env  qw(:all);
-use Cdist::Simple::Util qw(:all);
 
+use Exporter::Handy::Util qw(expand_xtags);
+use Exporter::Handy -exporter_setup => 1;
 
-use Exporter::Almighty -setup => {
-  tag => {
-    sugar     => [ qw( ensure item ) ],
-  },
-};
+our %EXPORT_TAGS = (
+  sugar     => [qw( ensure item )],
+);
+export( expand_xtags(\%EXPORT_TAGS, values %EXPORT_TAGS) );
 
 
 # cdist SUGAR & synonms
-sub item(@)   { goto &ensure }  ## no critic
-sub ensure(@) {
+sub item   { goto &ensure }  ## no critic
+sub ensure {
   local $_;
   my (@args, @reqs, %env, %opt);
 
@@ -121,9 +122,11 @@ sub cdist_reqs {
 1;
 __END__
 
-=head1 NAME
+__END__
 
-Cdist::Simple - Module abstract placeholder text
+=pod
+
+=encoding UTF-8
 
 =head1 SYNOPSIS
 
@@ -133,13 +136,4 @@ Cdist::Simple - Module abstract placeholder text
 
 =for comment The module's description.
 
-=head1 AUTHOR
-
-Tabulo[n] <dev@tabulo.net>
-
-=head1 COPYRIGHT AND LICENSE
-
-This software is copyright (c) 2023 by Tabulo[n].
-
-This is free software; you can redistribute it and/or modify it under
-the same terms as the Perl 5 programming language system itself.
+=cut

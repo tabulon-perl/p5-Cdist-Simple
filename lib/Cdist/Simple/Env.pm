@@ -1,11 +1,11 @@
-
 package Cdist::Simple::Env;
 
+# ABSTRACT: Easy access to the ENVIRONMENT VARIABLES used by the Cdist Configuration Manager
 our $VERSION = '0.001000';
 
-use v5.14;  # Exporter::Almighty requires perl v5.12+.
 use strict;
 use warnings;
+use Readonly; ## no critic
 
 BEGIN {
   sub cdist_ro_vars {
@@ -50,59 +50,72 @@ BEGIN {
     )
   }
 
-  sub cdist_vars {
-    ( cdist_ro_vars(), cdist_rw_vars() )
-  }
+  sub cdist_vars {(
+    cdist_ro_vars(),
+    cdist_rw_vars(),
+  )}
 
-  sub cdist_log_levels_native {
+  sub cdist_log_levels {
     my %res = ( OFF => 60, ERROR => 40, WARNING => 30, INFO => 20, VERBOSE => 15, DEBUG => 10, TRACE => 5);
     wantarray ? %res : \%res  ## no critic
   }
 
-  sub cdist_log_levels_prefixed {
-    my $prefix = $_[0] // 'CDIST_LOG_';
-    my %res = _prefix_keys( $prefix, cdist_log_levels_native());
-    wantarray ? %res : \%res  ## no critic
-  }
-
-  sub cdist_meta {
-    (
+  sub cdist_meta {(
       ro_vars => [ cdist_ro_vars() ],
       rw_vars => [ cdist_rw_vars() ],
       vars    => [ cdist_vars()    ],
-      log_levels_native   => { cdist_log_levels_native()   },
-      log_levels_prefixed => { cdist_log_levels_prefixed()  },
-    )
-  }
-
-  # PRIVATE routines
-  sub _prefix_keys {
-    # prefix keys (every odd item within pairs) with a given string
-    my $prefix = shift // '';
-    my %hash   = (@_);
-
-    map {
-      ( "$prefix" . "$_" , $hash{$_} )
-    } keys %hash;
-  }
+      log_levels   => { cdist_log_levels()   },
+  )}
 
 }
 
-use Env (  cdist_ro_vars(), cdist_rw_vars(), cdist_log_levels_native() );
-use Exporter::Handy 'xtags', -exporter_setup => 1;
+# CDIST LOG LEVELS
+Readonly our %CLL_        => cdist_log_levels();
 
-export(
-  xtags(
-    meta    => [ map { ( 'cdist_' . "$_") } qw( meta vars ro_vars rw_vars log_levels_native log_levels_prefixed ) ],
+Readonly our $CLL_OFF     => $CLL_{OFF};
+Readonly our $CLL_ERROR   => $CLL_{ERROR};
+Readonly our $CLL_WARNING => $CLL_{WARNING};
+Readonly our $CLL_INFO    => $CLL_{INFO};
+Readonly our $CLL_VERBOSE => $CLL_{VERBOSE};
+Readonly our $CLL_DEBUG   => $CLL_{DEBUG};
+Readonly our $CLL_TRACE   => $CLL_{TRACE};
 
-    # environment variables (tied as regular variables, thanks to the 'Env' module
-    ro    => [( map { '$' . "$_" } cdist_ro_vars() )],
-    rw    => [( map { '$' . "$_" } cdist_rw_vars() )],
-  ),
-  # const => {
-  #  log_levels             => { cdist_log_levels_prefixed() },
-  # },
+
+use Env (  cdist_ro_vars(), cdist_rw_vars() );
+
+use Exporter::Handy::Util qw(expand_xtags);
+use Exporter::Handy -exporter_setup => 1;
+
+our %EXPORT_TAGS= (
+  env     => [qw(:meta :vars :const)],
+
+  # meta
+  meta    => [ map { ( 'cdist_' . "$_") } qw(meta vars ro_vars rw_vars log_levels) ],
+
+  # environment variables (tied as regular variables, thanks to the 'Env' module
+  ro    => [( map { '$' . "$_" } cdist_ro_vars() )],
+  rw    => [( map { '$' . "$_" } cdist_rw_vars() )],
+  vars  => [qw(:ro :rw)],
+
+  # constants
+  const => ['%CLL_', ( map { '$CLL_' . "$_" } (sort keys %CLL_) )], # LOG LEVELS
 );
+export( expand_xtags(\%EXPORT_TAGS, values %EXPORT_TAGS) );
 
 
-42;
+1;
+
+
+=pod
+
+=encoding UTF-8
+
+=head1 SYNOPSIS
+
+=for comment Brief examples of using the module.
+
+=head1 DESCRIPTION
+
+=for comment The module's description.
+
+=cut

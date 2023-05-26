@@ -3,7 +3,7 @@ use warnings;
 
 use Test::More 0.88;
 use if $ENV{AUTHOR_TESTING}, 'Test::Warnings';
-use Cdist::Simple;
+use Cdist::Simple qw();
 
 # TODO: {
 #   local $TODO = "Write some tests!" ;
