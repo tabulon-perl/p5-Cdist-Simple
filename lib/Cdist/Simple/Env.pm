@@ -93,12 +93,13 @@ our %EXPORT_TAGS= (
   meta    => [ map { ( 'cdist_' . "$_") } qw(meta vars ro_vars rw_vars log_levels) ],
 
   # environment variables (tied as regular variables, thanks to the 'Env' module
+  vars  => [qw(:ro :rw)],
   ro    => [( map { '$' . "$_" } cdist_ro_vars() )],
   rw    => [( map { '$' . "$_" } cdist_rw_vars() )],
-  vars  => [qw(:ro :rw)],
 
   # constants
-  const => ['%CLL_', ( map { '$CLL_' . "$_" } (sort keys %CLL_) )], # LOG LEVELS
+  const      => [qw(:log_levels)],
+  log_levels => ['%CLL_', ( map { '$CLL_' . "$_" } (sort keys %CLL_) )], # LOG LEVELS
 );
 export( expand_xtags(\%EXPORT_TAGS, values %EXPORT_TAGS) );
 
